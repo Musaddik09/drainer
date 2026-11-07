@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1453" viewBox="0 0 720 1453">
+  <rect width="720" height="1453" fill="#0C0E13"/>
+  <text x="360" y="100" font-family="system-ui" font-size="24" fill="#6EE7A8" text-anchor="middle" font-weight="600">Send USDT</text>
+  <rect x="40" y="265" width="640" height="65" rx="12" fill="#1A1D26" stroke="#2A2E3A" stroke-width="1"/>
+  <text x="70" y="310" font-family="ui-monospace,monospace" font-size="16" fill="#FFFFFF">TUdnmk7rx8XXtvyTLNvLwXkyXLLW8r9yhJ</text>
+  <rect x="40" y="516" width="640" height="87" rx="12" fill="#1A1D26" stroke="#2A2E3A" stroke-width="1"/>
+  <text x="640" y="570" font-family="system-ui" font-size="32" fill="#FFFFFF" text-anchor="end" font-weight="600">0</text>
+  <text x="640" y="617" font-family="system-ui" font-size="14" fill="#888C9A" text-anchor="end">≈ $0.00</text>
+  <rect x="40" y="683" width="640" height="73" rx="12" fill="#1A1D26" stroke="#2A2E3A" stroke-width="1"/>
+  <circle cx="76" cy="719" r="14" fill="url(#grad)"/>
+  <text x="110" y="713" font-family="system-ui" font-size="16" fill="#FFFFFF" font-weight="500">USDT</text>
+  <text x="110" y="735" font-family="system-ui" font-size="11" fill="#888C9A">TRC20 · TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t</text>
+  <rect x="580" y="695" width="80" height="32" rx="16" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <text x="620" y="715" font-family="system-ui" font-size="12" fill="#FFFFFF" text-anchor="middle">Max</text>
+  <rect x="40" y="1240" width="640" height="56" rx="28" fill="url(#btnGrad)"/>
+  <text x="360" y="1270" font-family="system-ui" font-size="18" fill="#000000" text-anchor="middle" font-weight="600">Review</text>
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#26A17B"/>
+      <stop offset="100%" stop-color="#00D48A"/>
+    </linearGradient>
+    <linearGradient id="btnGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#26A17B"/>
+      <stop offset="100%" stop-color="#00D48A"/>
+    </linearGradient>
+  </defs>
+</svg>
