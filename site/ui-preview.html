@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Send USDT UI preview</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
+<style>
+*{box-sizing:border-box}
+
+html,body{
+ margin:0;
+ width:100%;
+ height:100%;
+ overflow:hidden;
+ background:#fff
+}
+
+button{font:inherit}
+button{border:0}
+
+#p{
+ position:fixed;
+ width:720px;
+ height:1453px;
+ left:50%;
+ top:50%;
+ transform:translate(-50%,-50%);
+ background:#0e1015;
+ font-family:Arial;
+ color:#f1f2f5
+}
+
+#head{
+ position:absolute;
+ top:0;
+ width:100%;
+ height:120px;
+ display:grid;
+ place-items:center;
+ background:#14161d;
+ font:bold 30px Arial;
+ line-height:40px;
+ z-index:5
+}
+
+#line{
+ position:absolute;
+ top:120px;
+ width:100%;
+ height:1px;
+ background:#363942;
+ z-index:5
+}
+
+.back{
+ position:absolute;
+ left:28px;
+ top:21px;
+ width:78px;
+ height:78px;
+ border-radius:50%;
+ border:1px solid #50535e;
+ background:transparent;
+ color:inherit;
+ z-index:7;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ cursor:pointer
+}
+.back svg{
+ display:block;
+ width:20px;
+ height:20px
+}
+
+#recipient{
+ position:absolute;
+ inset:143px 28px auto;
+ display:flex;
+ align-items:center;
+ gap:16px;
+ min-height:70px;
+ padding:0 16px;
+ border-radius:8px;
+ background:#1a1d26;
+ font:bold 28px Arial
+}
+
+#tolabel{
+ color:#aeb2bd
+}
+
+#amt{
+ position:absolute;
+ left:160px;
+ top:415px;
+ width:400px;
+ height:75px;
+ text-align:center;
+ font:bold 80px Arial;
+ line-height:75px;
+ color:#c9ccd3;
+ background:transparent;
+ white-space:nowrap;
+ z-index:5
+}
+
+#usd{
+ position:absolute;
+ left:280px;
+ top:505px;
+ width:160px;
+ height:42px;
+ text-align:center;
+ font:28px Arial;
+ line-height:38px;
+ background:transparent;
+ color:#aeb2bd;
+ z-index:5
+}
+
+#token{
+ position:absolute;
+ left:28px;
+ top:744px;
+ width:70px;
+ height:70px;
+ border-radius:50%;
+ background:#22a77d;
+ color:#fff;
+ font:bold 43px Arial;
+ line-height:70px;
+ text-align:center;
+ z-index:4;
+ overflow:hidden
+}
+#token img{
+ position:absolute;
+ inset:0;
+ width:100%;
+ height:100%;
+ object-fit:cover;
+ display:block
+}
+#usdt{
+ position:absolute;
+ left:118px;
+ top:762px;
+ font:bold 28px Arial;
+ line-height:35px;
+ z-index:4
+}
+
+#max{
+ position:absolute;
+ left:575px;
+ top:742px;
+ width:120px;
+ height:80px;
+ border-radius:45px;
+ background:#242833;
+ font:bold 25px Arial;
+ color:#f1f2f5;
+ z-index:5
+}
+
+#max:disabled{
+ opacity:.55
+}
+
+#rev{
+ position:absolute;
+ left:28px;
+ top:1333px;
+ width:664px;
+ height:98px;
+ border-radius:55px;
+ background:#282c36;
+ color:#aeb2bd;
+ font:bold 27px Arial;
+ z-index:5
+}
+
+.k{
+ position:absolute;
+ width:180px;
+ height:100px;
+ border-radius:8px;
+ background:#1a1d26;
+ color:#f1f2f5;
+ font:bold 40px Arial
+}
+
+.a1,.a2,.a3{top:850px}
+.a4,.a5,.a6{top:965px}
+.a7,.a8,.a9{top:1080px}
+.ad,.a0,.ab{top:1195px}
+
+.a1,.a4,.a7,.ad{left:45px}
+.a2,.a5,.a8,.a0{left:270px}
+.a3,.a6,.a9,.ab{left:495px}
+#preview-label{
+ position:fixed;
+ right:12px;
+ top:12px;
+ z-index:1;
+ padding:5px 9px;
+ border-radius:5px;
+ background:#eef1f5;
+ color:#252932;
+ font:12px Arial,sans-serif
+}
+</style>
+</head>
+
+<body>
+
+<span id="preview-label">UI preview</span>
+<div id="p" inert>
+
+ <div id="head">Amount</div>
+ <div id="line"></div>
+
+ <button id="back" class="back" aria-label="Back">
+   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+     <polyline points="15 5 8 12 15 19"></polyline>
+   </svg>
+ </button>
+
+ <div id="recipient">
+   <span id="tolabel">To</span>
+   <span>Sample recipient</span>
+ </div>
+
+ <div id="amt" style="color: rgb(201, 204, 211);">0</div>
+
+ <div id="usd">≈ $0.00 ↕</div>
+
+ <div id="token">
+   <img src="trc.png" alt="">
+ </div>
+ <div id="usdt">USDT</div>
+
+ <button id="max">Max</button>
+
+ <button class="k a1" data-key="1">1</button>
+ <button class="k a2" data-key="2">2</button>
+ <button class="k a3" data-key="3">3</button>
+
+ <button class="k a4" data-key="4">4</button>
+ <button class="k a5" data-key="5">5</button>
+ <button class="k a6" data-key="6">6</button>
+
+ <button class="k a7" data-key="7">7</button>
+ <button class="k a8" data-key="8">8</button>
+ <button class="k a9" data-key="9">9</button>
+
+ <button class="k ad" data-key=".">.</button>
+ <button class="k a0" data-key="0">0</button>
+ <button class="k ab" id="delete">⌫</button>
+
+ <button id="rev" disabled="">Review</button>
+
+</div>
+
+<script>
+const panel = document.getElementById("p");
+function fitPreview() {
+    const scale = Math.min(innerWidth / 720, innerHeight / 1453);
+    panel.style.transform = "translate(-50%, -50%) scale(" + scale + ")";
+}
+addEventListener("resize", fitPreview);
+fitPreview();
+</script>
+</body>
+</html>
