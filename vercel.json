@@ -1,0 +1,5 @@
+{
+  "buildCommand": "echo 'static site'",
+  "outputDirectory": "site",
+  "framework": null
+}
