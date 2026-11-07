@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Send USDT UI preview</title>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
 <style>
 *{box-sizing:border-box}
@@ -16,8 +16,11 @@ html,body{
  background:#fff
 }
 
-button{font:inherit}
-button{border:0}
+button{
+ font:inherit;
+ border:0;
+ padding:0
+}
 
 #p{
  position:fixed;
@@ -26,9 +29,9 @@ button{border:0}
  left:50%;
  top:50%;
  transform:translate(-50%,-50%);
- background:#0e1015;
+ background:#fff;
  font-family:Arial;
- color:#f1f2f5
+ color:#09090d
 }
 
 #head{
@@ -38,7 +41,7 @@ button{border:0}
  height:120px;
  display:grid;
  place-items:center;
- background:#14161d;
+ background:#fff;
  font:bold 30px Arial;
  line-height:40px;
  z-index:5
@@ -49,7 +52,7 @@ button{border:0}
  top:120px;
  width:100%;
  height:1px;
- background:#363942;
+ background:#e7e7e9;
  z-index:5
 }
 
@@ -60,14 +63,11 @@ button{border:0}
  width:78px;
  height:78px;
  border-radius:50%;
- border:1px solid #50535e;
  background:transparent;
  color:inherit;
  z-index:7;
- display:flex;
- align-items:center;
- justify-content:center;
- cursor:pointer
+ display:grid;
+ place-items:center
 }
 .back svg{
  display:block;
@@ -81,15 +81,12 @@ button{border:0}
  display:flex;
  align-items:center;
  gap:16px;
- min-height:70px;
- padding:0 16px;
- border-radius:8px;
- background:#1a1d26;
+ min-height:35px;
  font:bold 28px Arial
 }
 
 #tolabel{
- color:#aeb2bd
+ color:#9b9da3
 }
 
 #amt{
@@ -117,7 +114,7 @@ button{border:0}
  font:28px Arial;
  line-height:38px;
  background:transparent;
- color:#aeb2bd;
+ color:#09090d;
  z-index:5
 }
 
@@ -127,27 +124,17 @@ button{border:0}
  top:744px;
  width:70px;
  height:70px;
- border-radius:50%;
- background:#22a77d;
- color:#fff;
- font:bold 43px Arial;
- line-height:70px;
- text-align:center;
- z-index:4;
- overflow:hidden
+ z-index:4
 }
-#token img{
- position:absolute;
- inset:0;
+#token svg{
  width:100%;
  height:100%;
- object-fit:cover;
  display:block
 }
 #usdt{
  position:absolute;
  left:118px;
- top:762px;
+ top:746px;
  font:bold 28px Arial;
  line-height:35px;
  z-index:4
@@ -160,14 +147,10 @@ button{border:0}
  width:120px;
  height:80px;
  border-radius:45px;
- background:#242833;
+ background:#eeeef1;
  font:bold 25px Arial;
- color:#f1f2f5;
+ color:#09090d;
  z-index:5
-}
-
-#max:disabled{
- opacity:.55
 }
 
 #rev{
@@ -177,8 +160,8 @@ button{border:0}
  width:664px;
  height:98px;
  border-radius:55px;
- background:#282c36;
- color:#aeb2bd;
+ background:#f4f4f6;
+ color:#d0d0d6;
  font:bold 27px Arial;
  z-index:5
 }
@@ -187,9 +170,8 @@ button{border:0}
  position:absolute;
  width:180px;
  height:100px;
- border-radius:8px;
- background:#1a1d26;
- color:#f1f2f5;
+ background:transparent;
+ color:#09090d;
  font:bold 40px Arial
 }
 
@@ -217,7 +199,7 @@ button{border:0}
 
 <body>
 
-<span id="preview-label">UI preview</span>
+<span id="preview-label">Static preview</span>
 <div id="p" inert>
 
  <div id="head">Amount</div>
@@ -234,12 +216,18 @@ button{border:0}
    <span>Sample recipient</span>
  </div>
 
- <div id="amt" style="color: rgb(201, 204, 211);">0</div>
+ <div id="amt">0</div>
 
  <div id="usd">≈ $0.00 ↕</div>
 
  <div id="token">
-   <img src="trc.png" alt="">
+   <svg viewBox="0 0 70 70" aria-hidden="true">
+     <circle cx="33" cy="33" r="30" fill="#53a08a" stroke="#cfe1db" stroke-width="3"/>
+     <path fill="#fff" d="M16 16h34v6H36v29h-6V22H16z"/>
+     <ellipse cx="33" cy="29" rx="20" ry="5" fill="none" stroke="#fff" stroke-width="2"/>
+     <circle cx="52" cy="59" r="8" fill="#e33b48" stroke="#fff" stroke-width="2"/>
+     <path d="m48 56 8 1-5 6z" fill="none" stroke="#fff"/>
+   </svg>
  </div>
  <div id="usdt">USDT</div>
 
