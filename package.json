@@ -8,6 +8,7 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "canvas": "^3.2.3",
     "dotenv": "^16.6.1",
     "express": "^4.19.2",
     "tronweb": "^5.3.2"
